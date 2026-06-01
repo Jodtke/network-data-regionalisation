@@ -1,0 +1,41 @@
+scenario_name: res_capacity_preprocessing
+project_root: Y:\Group_SEM\MA_Eric\Dissertation\pypsa\opf
+
+network_dir: grid\target_year_2030\electrical_spectral_line_equivalent_dc_effective_reactance
+target_year: 2030
+
+atlite_case_dir: renewables\atlite_copy\corine_luisa_wdpa_onoff_acdc
+simulation_dir: renewables
+availability_onshore_nc:
+availability_offshore_nc:
+
+target_capacity_csv: renewables\res_generation_mapping_diag_2030_tyndp2024.csv
+pv_power_csv:
+onwind_power_csv:
+offwind_power_csv:
+weather_root:
+
+min_p_max_pu:
+  pv: 0.05
+  onwind: 0.10
+  offwind: 0.15
+min_p_nom_max:
+  pv: 5
+  onwind: 10
+  offwind: 20
+min_distance_offshore_km:
+max_distance_offshore_km: 100
+
+onshore_voronoi_geojson:
+generated_onshore_voronoi_geojson: datashapes\generated_regions\target_year_2030_electrical_spectral_line_equivalent_dc_effective_reactance_onshore_voronoi.geojson
+onshore_mask_geojsons:
+  - datashapes\europe_shape.geojson
+offshore_eez_geojson: datashapes\eez_offshore_eu27_uk_no_europe_only.geojson
+
+output_dir: renewables\target_year_2030\electrical_spectral_line_equivalent_dc_effective_reactance\res_corine_luisa_wdpa_onoff_acdc\res_bus_cap_preprocessed
+
+tyndp_scenario: NationalTrends
+tyndp_capacity_unit: GW
+
+start_year: 1982
+end_year: 2016

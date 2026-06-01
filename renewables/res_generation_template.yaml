@@ -1,0 +1,16 @@
+scenario_name: res_generation_disaggregation
+project_root: Y:\Group_SEM\MA_Eric\Dissertation\pypsa\opf
+
+network_dir: grid\target_year_2030\electrical_spectral_line_equivalent_dc_effective_reactance
+target_year: 2030
+
+atlite_case_dir: renewables\atlite_copy\corine_luisa_wdpa_onoff_acdc
+simulation_dir: renewables
+capacity_output_dir: renewables\target_year_2030\electrical_spectral_line_equivalent_dc_effective_reactance\res_corine_luisa_wdpa_onoff_acdc\res_bus_cap_preprocessed
+generation_long_csv: renewables\res_load_country_long_2030_tyndp2024.csv
+weather_root:
+
+output_dir: renewables\target_year_2030\electrical_spectral_line_equivalent_dc_effective_reactance\res_corine_luisa_wdpa_onoff_acdc\disaggregated
+
+start_year: 1982
+end_year: 2016

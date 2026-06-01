@@ -1,0 +1,63 @@
+# Beispielkonfiguration fuer beide Workflows
+# Zulaessige YAML-Struktur:
+# - top-level Keys fuer globale Defaults
+# - optionaler Block "common"
+# - optionaler Block "constraints"
+# - optionaler Block "inflows"
+#
+# Merge-Reihenfolge:
+# 1. Skript-Defaults
+# 2. top-level Keys
+# 3. common
+# 4. constraints oder inflows
+# 5. explizite CLI-Argumente
+#
+# Pfadregeln:
+# - base_dir und storage_override_csv: relativ zu dieser YAML-Datei
+# - output: relativ zu base_dir, ausser bei absolutem Pfad
+
+# Gemeinsame Defaults fuer beide Workflows.
+# Moegliche Keys hier oder auf top-level:
+# - year: int
+# - base_dir: Pfad
+# - region_level: country | market_node
+# - resolve_phs_to_wr: true | false
+# - use_default_storage_overrides: true | false
+# - storage_override_csv: Pfad
+common:
+  year: 2040
+  base_dir: Y:\Group_SEM\MA_Eric\Dissertation\DATA\raw\hydro\tyndp2024
+  region_level: country  # country | market_node
+  resolve_phs_to_wr: false
+  use_default_storage_overrides: true
+  #output: Y:\Group_SEM\MA_Eric\Dissertation\DATA\hydro\tyndp2024
+
+# Optional: alternative Override-Datei statt der bekannten Quaranta-Datei
+# common:
+#   storage_override_csv: Y:\Group_SEM\MA_Eric\Dissertation\DATA\hydro\quaranta2024\hydro_capacity_2025_quaranta.csv
+
+# Zusaetzliche constraints-spezifische Keys:
+# - temporal_resolution: daily | weekly
+# - impute_missing_constraint_fields: true | false
+# - output: Pfad
+# Optional koennen hier auch gemeinsame Keys aus "common" workflow-spezifisch ueberschrieben werden.
+constraints:
+  temporal_resolution: weekly  # daily | weekly
+  impute_missing_constraint_fields: true
+  output: Y:\Group_SEM\MA_Eric\Dissertation\DATA\hydro\tyndp2024\hydro_constraints_country_weekly_2040_quaranta.csv
+  # resolve_phs_to_wr: false
+  # use_default_storage_overrides: false
+  # storage_override_csv: .\custom_quaranta.csv
+
+# Zusaetzliche inflow-spezifische Keys:
+# - weather_year_start: int
+# - weather_year_end: int
+# - output: Pfad
+# Optional koennen hier auch gemeinsame Keys aus "common" workflow-spezifisch ueberschrieben werden.
+inflows:
+  weather_year_start: 1982
+  weather_year_end: 2016
+  output: Y:\Group_SEM\MA_Eric\Dissertation\DATA\hydro\tyndp2024\hydro_inflows_country_weekly_2040_quaranta.csv
+  # resolve_phs_to_wr: false
+  # use_default_storage_overrides: false
+  # storage_override_csv: .\custom_quaranta.csv

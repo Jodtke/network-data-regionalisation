@@ -1,0 +1,55 @@
+scenario_name: 2030_spectral_hac_line_equivalent_electrical_dc_effective_reactance_all_synch_128k
+project_root: Y:\Group_SEM\MA_Eric\Dissertation\pypsa\opf
+output_root: Y:\Group_SEM\MA_Eric\Dissertation\pypsa\opf\grid\target_year_2030
+country_reductions_csv: Y:\Group_SEM\MA_Eric\Dissertation\pypsa\opf\country_reductions.csv
+paths:
+  plants: Y:\Group_SEM\MA_Eric\Dissertation\pypsa\opf\powerplants\powerplants.csv
+  lines: Y:\Group_SEM\MA_Eric\Dissertation\pypsa\opf\grid\xiong2025 v07\lines.csv
+  links: Y:\Group_SEM\MA_Eric\Dissertation\pypsa\opf\grid\xiong2025 v07\links.csv
+  buses: Y:\Group_SEM\MA_Eric\Dissertation\pypsa\opf\grid\xiong2025 v07\buses.csv
+  converters: Y:\Group_SEM\MA_Eric\Dissertation\pypsa\opf\grid\xiong2025 v07\converters.csv
+  transformers: Y:\Group_SEM\MA_Eric\Dissertation\pypsa\opf\grid\xiong2025 v07\transformers.csv
+write_raw_outputs: false
+include_tyndp2020: true
+tyndp_base_snapshot_year: 2025
+target_year: 2030
+load_year: 2025
+generation_country_weight: 0.25
+load_country_weight: 0.75
+voltage_mode: simplify_380 # standard, per_unit
+s_base_mva: 100.0
+hvdc_model: pypsa_ac_links # hvdc_model: explicit_dc
+k_total: 128
+sync_collapse: false
+selected_country_cluster_codes:
+#  - A1
+  - A2 # DE-LU
+  - A3 # MD-UA
+  - A4 # RS-XK
+#  - A5
+#  - A6
+#  - A7
+#  - A8
+#  - A9
+#  - A10
+#  - A11
+#  - A12
+# ALTERNATIV -> selected_country_cluster_codes: []
+plot_bus_position_mode: medoid # mean
+snap_plot_positions_to_land: true
+snap_plot_max_distance_km: 20.0
+pre_prune_tiny_ac_leaf_nodes: true
+pre_prune_tiny_cross_border_leaf_nodes: true
+prune_tiny_ac_leaf_nodes: false
+prune_tiny_cross_border_leaf_nodes: false
+tiny_ac_leaf_max_member_buses: 2
+tiny_ac_leaf_max_capacity_mw: 300.0
+
+aggregation_modes:
+  - line_equivalent
+# - location_based
+similarities:
+  - dc_effective_reactance
+  - electrical
+# - geographical
+bbox: [-12, 35, 35, 72]

@@ -1,0 +1,25 @@
+scenario_name: 2030_load_disaggregation_without_A3
+project_root: C:\Users\jr8037\bwSyncShare\Dissertation\opf
+
+network_dir: C:\Users\jr8037\bwSyncShare\Dissertation\opf\grid\target_year_2030\electrical_spectral_line_equivalent_dc_effective_reactance_without_A3
+target_year: 2030
+
+load_csv: C:\Users\jr8037\bwSyncShare\Dissertation\opf\renewables\res_load_country_long_2030_tyndp2024.csv
+load_column: load
+
+reduced_buses_csv: C:\Users\jr8037\bwSyncShare\Dissertation\opf\grid\target_year_2030\electrical_spectral_line_equivalent_dc_effective_reactance_without_A3\buses.csv
+buses_with_clusters_csv: C:\Users\jr8037\bwSyncShare\Dissertation\opf\grid\target_year_2030\electrical_spectral_line_equivalent_dc_effective_reactance_without_A3\buses_with_clusters.csv
+country_clusters_csv: C:\Users\jr8037\bwSyncShare\Dissertation\opf\grid\target_year_2030\electrical_spectral_line_equivalent_dc_effective_reactance_without_A3\cesa_country_clusters.csv
+excluded_countries_csv: C:\Users\jr8037\bwSyncShare\Dissertation\opf\grid\target_year_2030\electrical_spectral_line_equivalent_dc_effective_reactance_without_A3\excluded_countries.csv
+
+nuts3_geojson: C:\Users\jr8037\bwSyncShare\Dissertation\opf\datashapes\nuts3_shapes_pop2021_gdp2024.geojson
+
+output_dir: C:\Users\jr8037\bwSyncShare\Dissertation\opf\load\target_year_2030\electrical_spectral_line_equivalent_dc_effective_reactance_without_A3
+output_csv: C:\Users\jr8037\bwSyncShare\Dissertation\opf\load\target_year_2030\electrical_spectral_line_equivalent_dc_effective_reactance_without_A3\disaggregated_load_country_bus_load_pop40_gdp60.csv
+shares_output_csv: C:\Users\jr8037\bwSyncShare\Dissertation\opf\load\target_year_2030\electrical_spectral_line_equivalent_dc_effective_reactance_without_A3\disaggregated_load_country_bus_shares_load_pop40_gdp60.csv
+
+population_weight: 0.4
+gdp_weight: 0.6
+distance_alpha: 1.0
+
+skip_missing_countries: true

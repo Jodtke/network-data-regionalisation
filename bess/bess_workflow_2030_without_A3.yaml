@@ -1,0 +1,19 @@
+scenario_name: bess_2030_dc_effective_reactance_without_A3
+
+project_root: C:\Users\jr8037\bwSyncShare\Dissertation\opf
+tyndp_input_dir: C:\Users\jr8037\bwSyncShare\Dissertation\DATA\bess\tyndp2024
+target_year: 2030
+scenario: NationalTrends
+
+network_dir: C:\Users\jr8037\bwSyncShare\Dissertation\opf\grid\target_year_2030\electrical_spectral_line_equivalent_dc_effective_reactance_without_A3
+buses_csv: C:\Users\jr8037\bwSyncShare\Dissertation\opf\grid\target_year_2030\electrical_spectral_line_equivalent_dc_effective_reactance_without_A3\buses.csv
+plants_csv: C:\Users\jr8037\bwSyncShare\Dissertation\opf\grid\target_year_2030\electrical_spectral_line_equivalent_dc_effective_reactance_without_A3\plants.csv
+buses_with_clusters_csv: C:\Users\jr8037\bwSyncShare\Dissertation\opf\grid\target_year_2030\electrical_spectral_line_equivalent_dc_effective_reactance_without_A3\buses_with_clusters.csv
+country_allocation_mode: bus_country
+
+bess_csv: C:\Users\jr8037\bwSyncShare\Dissertation\DATA\bess\tyndp2024\bess_power_2030_tyndp2024.csv
+load_shares_csv: C:\Users\jr8037\bwSyncShare\Dissertation\opf\load\target_year_2030\electrical_spectral_line_equivalent_dc_effective_reactance_without_A3\disaggregated_load_country_bus_shares_load_pop40_gdp60.csv
+res_bus_capacity_csv: C:\Users\jr8037\bwSyncShare\Dissertation\opf\renewables\target_year_2030\electrical_spectral_line_equivalent_dc_effective_reactance_without_A3\res_corine_luisa_wdpa_onoff_acdc\res_bus_cap_preprocessed\res_capacity_bus.csv
+
+res_weight_column: scenario_capacity_mw
+res_technologies: pv,onwind

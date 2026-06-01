@@ -1,0 +1,26 @@
+scenario_name: 2030_raw_tyndp2020_network
+project_root: "C:/Users/jr8037/bwSyncShare/Dissertation/opf"
+output_root: "C:/Users/jr8037/bwSyncShare/Dissertation/opf/grid/target_year_2030"
+country_reductions_csv: "C:/Users/jr8037/bwSyncShare/Dissertation/opf/country_reductions.csv"
+countries_shapefile: "C:/Users/jr8037/bwSyncShare/Dissertation/opf/datashapes/ne_110m_admin_0_countries.shp"
+paths:
+  plants: "C:/Users/jr8037/bwSyncShare/Dissertation/opf/powerplants/ARCHIVE/powerplants.csv"
+  lines: "C:/Users/jr8037/bwSyncShare/Dissertation/opf/grid/xiong2025 v07/lines.csv"
+  links: "C:/Users/jr8037/bwSyncShare/Dissertation/opf/grid/xiong2025 v07/links.csv"
+  buses: "C:/Users/jr8037/bwSyncShare/Dissertation/opf/grid/xiong2025 v07/buses.csv"
+  converters: "C:/Users/jr8037/bwSyncShare/Dissertation/opf/grid/xiong2025 v07/converters.csv"
+  transformers: "C:/Users/jr8037/bwSyncShare/Dissertation/opf/grid/xiong2025 v07/transformers.csv"
+write_raw_outputs: true
+raw_only: true
+raw_output_case_name: raw_tyndp2020_network
+include_tyndp2020: true
+tyndp_base_snapshot_year: 2025
+target_year: 2030
+load_year: 2025
+selected_country_cluster_codes:
+  - A2
+  - A3
+  - A4
+bbox: [-12, 35, 35, 72]
+snap_plot_positions_to_land: true
+snap_plot_max_distance_km: 20.0

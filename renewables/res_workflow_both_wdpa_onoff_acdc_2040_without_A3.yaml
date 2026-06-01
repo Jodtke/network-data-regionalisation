@@ -1,0 +1,35 @@
+project_root: C:\Users\jr8037\bwSyncShare\Dissertation\opf
+
+network_dir: grid\target_year_2040\electrical_spectral_line_equivalent_dc_effective_reactance_without_A3
+target_year: 2040
+
+atlite_base_dir: renewables\atlite_copy
+atlite_cases:
+  - corine_luisa_wdpa_onoff_acdc
+
+generation_long_csv: renewables\res_load_country_long_2040_tyndp2024.csv
+target_capacity_csv: renewables\res_generation_mapping_diag_2040_tyndp2024.csv
+excluded_countries_csv: grid\target_year_2040\electrical_spectral_line_equivalent_dc_effective_reactance_without_A3\excluded_countries.csv
+
+onshore_mask_geojsons:
+  - datashapes\europe_shape.geojson
+offshore_eez_geojson: datashapes\eez_offshore_eu27_uk_no_europe_only.geojson
+
+min_p_max_pu:
+  pv: 0.075
+  onwind: 0.035
+  offwind: 0.1
+min_p_nom_max:
+  pv: 25
+  onwind: 10
+  offwind: 10
+min_distance_offshore_km:
+max_distance_offshore_km:
+
+start_year: 1982
+end_year: 2016
+
+plot_bounds: [-11.5, 34.0, 41.5, 72.5]
+plot_weather_year: 2013
+skip_plot_comparison: false
+overwrite: true

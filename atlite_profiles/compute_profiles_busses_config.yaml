@@ -1,0 +1,47 @@
+# Config for the last run (1982-2024).
+
+start_year: 1982
+end_year: 2016
+cutout_dir: '//IIP-COMP103/endata/MA_Lisa/atlite_cutouts/cutouts'
+out_dir: '//IIP-COMP103/endata/MA_Eric/res_masked_regions'
+
+resources:
+  - pv
+  - onwind
+  - offwind
+
+mask_onshore: true
+mask_offshore: true
+use_excluder_mask: true
+excluder_res_onshore: 100
+excluder_res_offshore: 200
+
+onshore_mask_shapes:
+  - 'Y:\Group_SEM\MA_Eric\Dissertation\pypsa\opf\datashapes\europe_shape.geojson'
+offshore_mask_shapes:
+  - 'Y:\Group_SEM\MA_Eric\Dissertation\pypsa\opf\datashapes\eez_offshore_eu27_uk_no_europe_only.geojson'
+onshore_regions: 'Y:\Group_SEM\MA_Eric\Dissertation\pypsa\opf\datashapes\regions_onshore_bus_2030_voronoi.geojson'
+offshore_regions: 'Y:\Group_SEM\MA_Eric\Dissertation\pypsa\opf\datashapes\eez_offshore_eu27_uk_no_europe_only.geojson'
+
+landuse_dataset: both
+landuse_fusion: prefer-luisa
+corine_landcover_path: 'Y:\Group_SEM\MA_Eric\Dissertation\pypsa\opf\datashapes\CORINE_LANDCOVER_U2018_CLC2018_V2020_20u1.tif'
+luisa_landcover_path: 'Y:\Group_SEM\MA_Eric\Dissertation\pypsa\opf\datashapes\LUISA_basemap_020321_100m.tif'
+
+pypsa_defaults: true
+pypsa_offwind_variant: acdc
+
+exclude_wdpa_offshore: true
+exclude_wdpa_onshore: true
+
+# Shipping traffic
+shipdensity_threshold: 2.1e7 # pypsa default
+
+availability_mode: regions
+resource_class_mode: per-region
+resource_classes: 4
+resource_class_year: 1982
+
+capacity_per_sqkm_pv: 5.5
+capacity_per_sqkm_onwind: 3
+capacity_per_sqkm_offwind: 2

@@ -1,0 +1,16 @@
+common:
+  target_year: 2030
+  resolve_phs: true
+  project_root: ..
+  hydro_dir: tyndp2024
+  country_profiles_dir: atlite_copy/country_profiles
+  output_dir: target_year_2030/electrical_spectral_line_equivalent_dc_effective_reactance
+  include_inflows: true
+  audit_only: false
+
+# Optional overrides:
+# disaggregation:
+#   network_dir: ../grid/target_year_2040/electrical_spectral_line_equivalent_dc_effective_reactance
+#   load_csv: ../load/target_year_2040/electrical_spectral_line_equivalent_dc_effective_reactance/disaggregated_load_country_bus_load_pop40_gdp60.csv
+#   country_clusters_csv: ../grid/target_year_2040/electrical_spectral_line_equivalent_dc_effective_reactance/cesa_country_clusters.csv
+#   country_reductions_csv: ../country_reductions.csv

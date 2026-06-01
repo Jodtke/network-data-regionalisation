@@ -1,0 +1,25 @@
+scenario_name: 2040_load_disaggregation
+project_root: Y:\Group_SEM\MA_Eric\Dissertation\pypsa\opf
+
+network_dir: Y:\Group_SEM\MA_Eric\Dissertation\pypsa\opf\grid\target_year_2040\electrical_spectral_line_equivalent_dc_effective_reactance
+target_year: 2040
+
+load_csv: Y:\Group_SEM\MA_Eric\Dissertation\pypsa\opf\load\res_load_country_long_2040_tyndp2024.csv
+load_column: load
+
+# Optional overrides; if omitted, they are derived from network_dir
+reduced_buses_csv: Y:\Group_SEM\MA_Eric\Dissertation\pypsa\opf\grid\target_year_2040\electrical_spectral_line_equivalent_dc_effective_reactance\buses.csv
+buses_with_clusters_csv: Y:\Group_SEM\MA_Eric\Dissertation\pypsa\opf\grid\target_year_2040\electrical_spectral_line_equivalent_dc_effective_reactance\buses_with_clusters.csv
+country_clusters_csv: Y:\Group_SEM\MA_Eric\Dissertation\pypsa\opf\grid\target_year_2040\electrical_spectral_line_equivalent_dc_effective_reactance\cesa_country_clusters.csv
+
+nuts3_geojson: Y:\Group_SEM\MA_Eric\Dissertation\pypsa\opf\datashapes\nuts3_shapes_pop2021_gdp2024.geojson
+
+output_dir: Y:\Group_SEM\MA_Eric\Dissertation\pypsa\opf\load\target_year_2040\electrical_spectral_line_equivalent_dc_effective_reactance
+output_csv: Y:\Group_SEM\MA_Eric\Dissertation\pypsa\opf\load\target_year_2040\electrical_spectral_line_equivalent_dc_effective_reactance\disaggregated_load_country_bus_load_pop40_gdp60.csv
+shares_output_csv: Y:\Group_SEM\MA_Eric\Dissertation\pypsa\opf\load\target_year_2040\electrical_spectral_line_equivalent_dc_effective_reactance\disaggregated_load_country_bus_shares_load_pop40_gdp60.csv
+
+population_weight: 0.4
+gdp_weight: 0.6
+distance_alpha: 1.0
+
+skip_missing_countries: false

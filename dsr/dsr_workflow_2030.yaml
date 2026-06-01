@@ -1,0 +1,11 @@
+scenario_name: dsr_2030_dc_effective_reactance
+
+project_root: Y:\Group_SEM\MA_Eric\Dissertation\pypsa\opf
+target_year: 2030
+scenario: NationalTrends
+
+network_dir: Y:\Group_SEM\MA_Eric\Dissertation\pypsa\opf\grid\target_year_2030\electrical_spectral_line_equivalent_dc_effective_reactance
+dsr_input_dir: C:\Users\jr8037\bwSyncShare\Dissertation\DATA\raw\dsr\tyndp2024
+price_bands_csv: C:\Users\jr8037\bwSyncShare\Dissertation\DATA\raw\dsr\tyndp2024\dsr_price_bands_2030_tyndp2024.csv
+availability_csv: C:\Users\jr8037\bwSyncShare\Dissertation\DATA\raw\dsr\tyndp2024\dsr_available_capacity_2030_tyndp2024.csv
+load_shares_csv: Y:\Group_SEM\MA_Eric\Dissertation\pypsa\opf\load\target_year_2030\electrical_spectral_line_equivalent_dc_effective_reactance\disaggregated_load_country_bus_shares_load_pop40_gdp60.csv
