@@ -1,4 +1,4 @@
-# OPF Scenario Regionalisation Pipeline
+# Scenario Regionalisation Pipeline
 
 This directory contains the preprocessing workflow used to derive nodal input
 data for European unit commitment and optimal power flow studies. The pipeline
