@@ -20,6 +20,7 @@ modules.
 from __future__ import annotations
 
 import argparse
+import contextlib
 import json
 import os
 import re
@@ -35,9 +36,10 @@ import networkx as nx
 
 from scipy import sparse
 from scipy.sparse.csgraph import connected_components
-from scipy.sparse.linalg import ArpackNoConvergence, eigsh
 from sklearn.cluster import AgglomerativeClustering, KMeans, MiniBatchKMeans
 from sklearn.neighbors import BallTree
+import sklearn.cluster._kmeans as sklearn_kmeans
+import sklearn.utils.parallel as sklearn_parallel
 
 import pycountry
 from shapely.geometry import Point, box
@@ -68,6 +70,33 @@ except ModuleNotFoundError:
 #MODIFIED_FOLDER = "modified"
 #if INCLUDE_TYNDP2020:
 #    MODIFIED_PATH = BASE_DATA / MODIFIED_FOLDER / f"target_year_{TARGET_YEAR}"
+
+
+class _NoThreadpoolController:
+    def info(self) -> list[object]:
+        return []
+
+    def limit(self, *args: object, **kwargs: object) -> contextlib.AbstractContextManager[None]:
+        return contextlib.nullcontext()
+
+
+def _disable_sklearn_threadpool_probe() -> None:
+    """Avoid threadpoolctl crashes during scikit-learn threadpool diagnostics."""
+    def _noop_check(self: object, X: object, n_samples: object) -> None:
+        return None
+
+    for cls in (KMeans, MiniBatchKMeans):
+        if hasattr(cls, "_check_mkl_vcomp"):
+            setattr(cls, "_check_mkl_vcomp", _noop_check)
+
+    def _controller_factory() -> _NoThreadpoolController:
+        return _NoThreadpoolController()
+
+    sklearn_kmeans._get_threadpool_controller = _controller_factory
+    sklearn_parallel._get_threadpool_controller = _controller_factory
+
+
+_disable_sklearn_threadpool_probe()
 #else:
 #    MODIFIED_PATH = BASE_DATA / MODIFIED_FOLDER
 #os.makedirs(MODIFIED_PATH, exist_ok=True)
@@ -167,7 +196,11 @@ ENTSOE_LOAD_EXCLUDED_MAP_CODES = (
 # I/O
 # ============================================================
 def read_plants_csv(path: Path) -> pd.DataFrame:
-    return pd.read_csv(path, sep=",")
+    out = pd.read_csv(path, sep=_detect_delimiter(path), engine="python")
+    unnamed_cols = [col for col in out.columns if str(col).startswith("Unnamed:")]
+    if "id" not in out.columns and unnamed_cols:
+        out = out.rename(columns={unnamed_cols[0]: "id"})
+    return out
 
 
 def read_net_csv(path: Path) -> pd.DataFrame:
@@ -799,6 +832,10 @@ def assign_plants_to_buses(
     plants["assigned_bus"] = assigned
     plants["dist_km"] = dist_km
     return plants
+
+
+def _drop_existing_plant_bus_metadata(plants: pd.DataFrame) -> pd.DataFrame:
+    return plants.drop(columns=["sync_area", "sync_node", "sync_area_bus", "sync_node_bus"], errors="ignore")
 
 
 def _drop_edges_touching_buses(edges: pd.DataFrame, removed_bus_ids: set[str]) -> pd.DataFrame:
@@ -2307,6 +2344,134 @@ def _build_sparse_weighted_adjacency(bus_ids: np.ndarray, edges: pd.DataFrame) -
     return W
 
 
+def _dense_symmetric_eigenvectors(
+    matrix: sparse.spmatrix,
+    n_vecs: int,
+    *,
+    largest: bool,
+) -> np.ndarray:
+    dense = matrix.toarray() if sparse.issparse(matrix) else np.asarray(matrix)
+    vals, vecs = np.linalg.eigh(dense)
+    order = np.argsort(vals)
+    if largest:
+        order = order[::-1]
+    return vecs[:, order[:n_vecs]]
+
+
+def _safe_symmetric_eigenvectors(
+    matrix: sparse.spmatrix,
+    n_vecs: int,
+    *,
+    largest: bool,
+    random_state: int = 0,
+    dense_max_n: int = 2500,
+) -> np.ndarray:
+    """Return selected eigenvectors without SciPy sparse eigensolvers.
+
+    ARPACK and LOBPCG have shown native crashes on some Windows/SciPy builds
+    for the larger 256-node reduction. The dense path is safe for the country
+    and subnetwork blocks used here; oversized blocks fall back to coordinate
+    clustering through the caller's normal exception handling.
+    """
+    n = int(matrix.shape[0])
+    n_vecs = max(1, min(int(n_vecs), max(1, n - 1)))
+    if n <= 1:
+        return np.ones((n, 1), dtype=float)
+
+    if n > dense_max_n:
+        raise ValueError(
+            f"Spectral block with {n} nodes exceeds dense fallback limit "
+            f"({dense_max_n})."
+        )
+
+    vecs = _dense_symmetric_eigenvectors(matrix, n_vecs, largest=largest)
+    if not np.isfinite(vecs).all():
+        raise ValueError("Dense eigensolver returned non-finite eigenvectors.")
+    return vecs
+
+
+def _kmeans_labels(
+    X: np.ndarray,
+    n_clusters: int,
+    *,
+    random_state: int = 0,
+    max_iter: int = 100,
+    tol: float = 1e-6,
+) -> np.ndarray:
+    X = np.asarray(X, dtype=float)
+    n = int(X.shape[0])
+    k = max(1, min(int(n_clusters), n))
+    if n == 0:
+        return np.zeros(0, dtype=int)
+    if k <= 1:
+        return np.zeros(n, dtype=int)
+    if n <= k:
+        return np.arange(n, dtype=int)
+
+    finite = np.isfinite(X)
+    if not finite.all():
+        col_means = np.divide(
+            np.where(finite, X, 0.0).sum(axis=0),
+            finite.sum(axis=0),
+            out=np.zeros(X.shape[1], dtype=float),
+            where=finite.sum(axis=0) > 0,
+        )
+        X = np.where(finite, X, col_means)
+
+    rng = np.random.default_rng(random_state)
+    first = int(rng.integers(n))
+    centers = np.empty((k, X.shape[1]), dtype=float)
+    centers[0] = X[first]
+    chosen = {first}
+    closest = np.sum((X - centers[0]) ** 2, axis=1)
+    for j in range(1, k):
+        idx = int(np.argmax(closest))
+        if closest[idx] <= 0.0 or idx in chosen:
+            remaining = [i for i in range(n) if i not in chosen]
+            idx = remaining[0]
+        centers[j] = X[idx]
+        chosen.add(idx)
+        closest = np.minimum(closest, np.sum((X - centers[j]) ** 2, axis=1))
+
+    labels = np.full(n, -1, dtype=int)
+    for _ in range(max_iter):
+        dist2 = np.empty((n, k), dtype=float)
+        for j in range(k):
+            delta = X - centers[j]
+            dist2[:, j] = np.sum(delta * delta, axis=1)
+
+        new_labels = np.argmin(dist2, axis=1).astype(int)
+        counts = np.bincount(new_labels, minlength=k)
+        empty = np.where(counts == 0)[0]
+        if empty.size:
+            assigned_dist = dist2[np.arange(n), new_labels]
+            for j in empty:
+                for idx in np.argsort(assigned_dist)[::-1]:
+                    src = new_labels[idx]
+                    if counts[src] > 1:
+                        counts[src] -= 1
+                        new_labels[idx] = int(j)
+                        counts[j] += 1
+                        assigned_dist[idx] = 0.0
+                        break
+
+        new_centers = centers.copy()
+        for j in range(k):
+            members = X[new_labels == j]
+            if len(members):
+                new_centers[j] = members.mean(axis=0)
+
+        movement = float(np.max(np.sum((new_centers - centers) ** 2, axis=1)))
+        if np.array_equal(labels, new_labels) and movement <= tol:
+            labels = new_labels
+            centers = new_centers
+            break
+        labels = new_labels
+        centers = new_centers
+
+    return labels
+
+
 def _spectral_labels(W: sparse.csr_matrix, k: int, *, random_state: int = 0) -> np.ndarray:
     n = W.shape[0]
     if k <= 1 or n <= 1:
@@ -2320,11 +2485,16 @@ def _spectral_labels(W: sparse.csr_matrix, k: int, *, random_state: int = 0) -> 
     Lsym = sparse.eye(n, format="csr") - D_inv_sqrt @ W @ D_inv_sqrt
 
     nev = min(k, n - 1)
-    _, vecs = eigsh(Lsym, k=nev, which="SM")
+    vecs = _safe_symmetric_eigenvectors(
+        Lsym,
+        n_vecs=nev,
+        largest=False,
+        random_state=random_state,
+    )
     rn = np.linalg.norm(vecs, axis=1)
     rn[rn == 0] = 1.0
     X = vecs / rn[:, None]
-    return KMeans(n_clusters=k, random_state=random_state, n_init="auto").fit_predict(X)
+    return _kmeans_labels(X, n_clusters=k, random_state=random_state)
 
 
 def _build_dc_susceptance_laplacian(
@@ -2578,11 +2748,7 @@ def cluster_kmeans_geo(
         if k_group <= 1:
             labels = np.zeros(len(bg), dtype=int)
         else:
-            labels = KMeans(
-                n_clusters=k_group,
-                random_state=random_state,
-                n_init="auto",
-            ).fit_predict(X)
+            labels = _kmeans_labels(X, n_clusters=k_group, random_state=random_state)
 
         for local in np.unique(labels):
             members = bus_ids[labels == local]
@@ -2648,21 +2814,21 @@ def cluster_electrical_spectral(
 
                 if Wc.nnz == 0:
                     Xc = _coords_feature_matrix(bg, bus_ids_c)
-                    lab = MiniBatchKMeans(
+                    lab = _kmeans_labels(
+                        Xc,
                         n_clusters=min(k_c, len(bus_ids_c)),
                         random_state=random_state,
-                        n_init="auto",
-                    ).fit_predict(Xc)
+                    )
                 else:
                     try:
                         lab = _spectral_labels(Wc, k=k_c, random_state=random_state)
                     except Exception:
                         Xc = _coords_feature_matrix(bg, bus_ids_c)
-                        lab = MiniBatchKMeans(
+                        lab = _kmeans_labels(
+                            Xc,
                             n_clusters=min(k_c, len(bus_ids_c)),
                             random_state=random_state,
-                            n_init="auto",
-                        ).fit_predict(Xc)
+                        )
 
             for local in np.unique(lab):
                 members = bus_ids_c[lab == local]
@@ -2750,18 +2916,14 @@ def cluster_hac(
                         X_c = _coords_feature_matrix(bg, bus_ids_c)
                     else:
                         try:
-                            _, vecs = eigsh(S, k=nev, which="LA", tol=1e-3, maxiter=8000)
+                            vecs = _safe_symmetric_eigenvectors(
+                                S,
+                                n_vecs=nev,
+                                largest=True,
+                            )
                             rn = np.linalg.norm(vecs, axis=1)
                             rn[rn == 0] = 1.0
                             X_c = vecs / rn[:, None]
-                        except ArpackNoConvergence as e:
-                            vecs = e.eigenvectors
-                            if vecs is None or vecs.shape[1] < 2:
-                                X_c = _coords_feature_matrix(bg, bus_ids_c)
-                            else:
-                                rn = np.linalg.norm(vecs, axis=1)
-                                rn[rn == 0] = 1.0
-                                X_c = vecs / rn[:, None]
                         except Exception:
                             X_c = _coords_feature_matrix(bg, bus_ids_c)
             else:
@@ -2840,11 +3002,11 @@ def cluster_mst(
 
                 if G.number_of_edges() == 0:
                     Xc = _coords_feature_matrix(bg, bus_ids_c)
-                    lab = MiniBatchKMeans(
+                    lab = _kmeans_labels(
+                        Xc,
                         n_clusters=min(k_c, len(bus_ids_c)),
                         random_state=0,
-                        n_init="auto",
-                    ).fit_predict(Xc)
+                    )
                 else:
                     Tm = nx.maximum_spanning_tree(G, weight="weight")
                     tree_edges = sorted(
@@ -2859,11 +3021,11 @@ def cluster_mst(
                     comps = list(nx.connected_components(Tm))
                     if len(comps) < k_c:
                         Xc = _coords_feature_matrix(bg, bus_ids_c)
-                        lab = MiniBatchKMeans(
+                        lab = _kmeans_labels(
+                            Xc,
                             n_clusters=min(k_c, len(bus_ids_c)),
                             random_state=0,
-                            n_init="auto",
-                        ).fit_predict(Xc)
+                        )
                     else:
                         lab = np.zeros(len(bus_ids_c), dtype=int)
                         pos = {b: i for i, b in enumerate(bus_ids_c)}
@@ -4019,7 +4181,7 @@ def reduce_network(
     conv0 = _prep_edge_table(converters, "converter_id")
     trafo0 = _prep_transformers(transformers)
 
-    P0 = plants_assigned.copy()
+    P0 = _drop_existing_plant_bus_metadata(plants_assigned.copy())
     P0["assigned_bus"] = P0["assigned_bus"].astype(str)
     P0 = P0.merge(
         buses0[["bus_id", "sync_area", "sync_node"]],
@@ -6009,6 +6171,7 @@ def run_grid_reduction(settings: dict[str, Any]) -> None:
 
     plants_assigned = assign_plants_to_buses(plants, buses)
     buses0 = add_sync_area_to_buses(_prep_buses(buses))
+    plants_assigned = _drop_existing_plant_bus_metadata(plants_assigned)
     plants_assigned = plants_assigned.merge(
         buses0[["bus_id", "sync_area", "sync_node"]],
         left_on="assigned_bus",

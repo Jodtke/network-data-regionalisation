@@ -1,15 +1,15 @@
 scenario_name: 2040_spectral_hac_line_equivalent_dc_effective_reactance_all_synch_128k_without_A3
-project_root: C:\Users\jr8037\bwSyncShare\Dissertation\opf
-base_data_dir: C:\Users\jr8037\bwSyncShare\Dissertation\opf\grid
-output_root: C:\Users\jr8037\bwSyncShare\Dissertation\opf\grid\target_year_2040
-country_reductions_csv: C:\Users\jr8037\bwSyncShare\Dissertation\opf\country_reductions.csv
+project_root: Y:\Group_SEM\MA_Eric\Dissertation\opf
+base_data_dir: Y:\Group_SEM\MA_Eric\Dissertation\opf\grid
+output_root: Y:\Group_SEM\MA_Eric\Dissertation\opf\grid\target_year_2040
+country_reductions_csv: Y:\Group_SEM\MA_Eric\Dissertation\opf\country_reductions.csv
 paths:
-  plants: C:\Users\jr8037\bwSyncShare\Dissertation\opf\powerplants\ARCHIVE\powerplants.csv
-  lines: C:\Users\jr8037\bwSyncShare\Dissertation\opf\grid\xiong2025 v07\lines.csv
-  links: C:\Users\jr8037\bwSyncShare\Dissertation\opf\grid\xiong2025 v07\links.csv
-  buses: C:\Users\jr8037\bwSyncShare\Dissertation\opf\grid\xiong2025 v07\buses.csv
-  converters: C:\Users\jr8037\bwSyncShare\Dissertation\opf\grid\xiong2025 v07\converters.csv
-  transformers: C:\Users\jr8037\bwSyncShare\Dissertation\opf\grid\xiong2025 v07\transformers.csv
+  plants: Y:\Group_SEM\MA_Eric\Dissertation\opf\powerplants\ARCHIVE\powerplants.csv
+  lines: Y:\Group_SEM\MA_Eric\Dissertation\opf\grid\xiong2025 v07\lines.csv
+  links: Y:\Group_SEM\MA_Eric\Dissertation\opf\grid\xiong2025 v07\links.csv
+  buses: Y:\Group_SEM\MA_Eric\Dissertation\opf\grid\xiong2025 v07\buses.csv
+  converters: Y:\Group_SEM\MA_Eric\Dissertation\opf\grid\xiong2025 v07\converters.csv
+  transformers: Y:\Group_SEM\MA_Eric\Dissertation\opf\grid\xiong2025 v07\transformers.csv
 write_raw_outputs: false
 include_tyndp2020: true
 tyndp_base_snapshot_year: 2025
@@ -22,7 +22,7 @@ s_base_mva: 100.0
 hvdc_model: pypsa_ac_links
 k_total: 128
 sync_collapse: false
-network_case_suffix: _without_A3
+network_case_suffix: _without_A3_128k
 selected_country_cluster_codes:
   - A2
   - A4

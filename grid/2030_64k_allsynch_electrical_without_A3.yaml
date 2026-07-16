@@ -1,10 +1,10 @@
-scenario_name: 2030_spectral_hac_line_equivalent_dc_effective_reactance_all_synch_128k_without_A3
+scenario_name: 2030_spectral_hac_line_equivalent_dc_effective_reactance_all_synch_64k_without_A3
 project_root: Y:\Group_SEM\MA_Eric\Dissertation\opf
 base_data_dir: Y:\Group_SEM\MA_Eric\Dissertation\opf\grid
 output_root: Y:\Group_SEM\MA_Eric\Dissertation\opf\grid\target_year_2030
 country_reductions_csv: Y:\Group_SEM\MA_Eric\Dissertation\opf\country_reductions.csv
 paths:
-  plants: Y:\Group_SEM\MA_Eric\Dissertation\opf\powerplants\ARCHIVE\powerplants.csv
+  plants: Y:\Group_SEM\MA_Eric\Dissertation\opf\grid\xiong2025 v07\plants_with_bus.csv
   lines: Y:\Group_SEM\MA_Eric\Dissertation\opf\grid\xiong2025 v07\lines.csv
   links: Y:\Group_SEM\MA_Eric\Dissertation\opf\grid\xiong2025 v07\links.csv
   buses: Y:\Group_SEM\MA_Eric\Dissertation\opf\grid\xiong2025 v07\buses.csv
@@ -20,9 +20,9 @@ load_country_weight: 0.75
 voltage_mode: simplify_380
 s_base_mva: 100.0
 hvdc_model: pypsa_ac_links
-k_total: 128
+k_total: 64
 sync_collapse: false
-network_case_suffix: _without_A3_128k
+network_case_suffix: _without_A3_64k
 selected_country_cluster_codes:
   - A2
   - A4

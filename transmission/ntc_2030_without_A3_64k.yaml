@@ -1,0 +1,6 @@
+raw_ntc: Y:\Group_SEM\MA_Eric\Dissertation\DATA\raw\transmission\tyndp2024\ntc_tyndp2024.csv
+grid_dir: Y:\Group_SEM\MA_Eric\Dissertation\opf\grid\target_year_2030\electrical_spectral_line_equivalent_dc_effective_reactance_without_A3_64k
+output_dir: Y:\Group_SEM\MA_Eric\Dissertation\opf\transmission\target_year_2030\electrical_spectral_line_equivalent_dc_effective_reactance_without_A3_64k
+target_year: 2030
+output_name: ntc_tyndp2024.csv
+excluded_countries_csv: Y:\Group_SEM\MA_Eric\Dissertation\opf\grid\target_year_2030\electrical_spectral_line_equivalent_dc_effective_reactance_without_A3_64k\excluded_countries.csv

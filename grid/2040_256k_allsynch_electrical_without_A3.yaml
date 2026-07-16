@@ -1,0 +1,45 @@
+scenario_name: 2040_spectral_hac_line_equivalent_dc_effective_reactance_all_synch_256k_without_A3
+project_root: C:\Users\jr8037\bwSyncShare\Dissertation\opf
+base_data_dir: C:\Users\jr8037\bwSyncShare\Dissertation\opf\grid
+output_root: C:\Users\jr8037\bwSyncShare\Dissertation\opf\grid\target_year_2040
+country_reductions_csv: C:\Users\jr8037\bwSyncShare\Dissertation\opf\country_reductions.csv
+paths:
+  plants: C:\Users\jr8037\bwSyncShare\Dissertation\opf\grid\xiong2025 v07\plants_with_bus.csv
+  lines: C:\Users\jr8037\bwSyncShare\Dissertation\opf\grid\xiong2025 v07\lines.csv
+  links: C:\Users\jr8037\bwSyncShare\Dissertation\opf\grid\xiong2025 v07\links.csv
+  buses: C:\Users\jr8037\bwSyncShare\Dissertation\opf\grid\xiong2025 v07\buses.csv
+  converters: C:\Users\jr8037\bwSyncShare\Dissertation\opf\grid\xiong2025 v07\converters.csv
+  transformers: C:\Users\jr8037\bwSyncShare\Dissertation\opf\grid\xiong2025 v07\transformers.csv
+write_raw_outputs: false
+include_tyndp2020: true
+tyndp_base_snapshot_year: 2025
+target_year: 2040
+load_year: 2025
+generation_country_weight: 0.25
+load_country_weight: 0.75
+voltage_mode: simplify_380
+s_base_mva: 100.0
+hvdc_model: pypsa_ac_links
+k_total: 256
+sync_collapse: false
+network_case_suffix: _without_A3_256k
+selected_country_cluster_codes:
+  - A2
+  - A4
+excluded_country_cluster_codes:
+  - A3
+plot_bus_position_mode: medoid
+snap_plot_positions_to_land: true
+snap_plot_max_distance_km: 20.0
+pre_prune_tiny_ac_leaf_nodes: true
+pre_prune_tiny_cross_border_leaf_nodes: true
+prune_tiny_ac_leaf_nodes: false
+prune_tiny_cross_border_leaf_nodes: false
+tiny_ac_leaf_max_member_buses: 2
+tiny_ac_leaf_max_capacity_mw: 300.0
+
+aggregation_modes:
+  - line_equivalent
+similarities:
+  - dc_effective_reactance
+bbox: [-12, 35, 35, 72]
