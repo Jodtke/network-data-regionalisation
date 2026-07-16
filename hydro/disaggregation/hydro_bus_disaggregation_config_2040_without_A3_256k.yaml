@@ -1,0 +1,14 @@
+common:
+  target_year: 2040
+  resolve_phs: true
+  project_root: C:\Users\jr8037\bwSyncShare\Dissertation\opf
+  hydro_dir: C:\Users\jr8037\bwSyncShare\Dissertation\opf\hydro\tyndp2024
+  country_profiles_dir: C:\Users\jr8037\bwSyncShare\Dissertation\opf\hydro\atlite_copy\country_profiles
+  network_dir: C:\Users\jr8037\bwSyncShare\Dissertation\opf\grid\target_year_2040\electrical_spectral_line_equivalent_dc_effective_reactance_without_A3_256k
+  load_csv: C:\Users\jr8037\bwSyncShare\Dissertation\opf\load\target_year_2040\electrical_spectral_line_equivalent_dc_effective_reactance_without_A3_256k\disaggregated_load_country_bus_load_pop40_gdp60.csv
+  country_clusters_csv: C:\Users\jr8037\bwSyncShare\Dissertation\opf\grid\target_year_2040\electrical_spectral_line_equivalent_dc_effective_reactance_without_A3_256k\cesa_country_clusters.csv
+  country_reductions_csv: C:\Users\jr8037\bwSyncShare\Dissertation\opf\country_reductions.csv
+  excluded_countries_csv: C:\Users\jr8037\bwSyncShare\Dissertation\opf\grid\target_year_2040\electrical_spectral_line_equivalent_dc_effective_reactance_without_A3_256k\excluded_countries.csv
+  output_dir: C:\Users\jr8037\bwSyncShare\Dissertation\opf\hydro\target_year_2040\electrical_spectral_line_equivalent_dc_effective_reactance_without_A3_256k
+  include_inflows: true
+  audit_only: false

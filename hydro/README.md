@@ -48,10 +48,16 @@ the reduced network as the primary siting signal. Type shifts between ROR, WR,
 and PHS are handled before true residual additions are placed. If no hydro
 basis exists for a country, the workflow falls back to load shares.
 
-Inflows are distributed by storage shares where possible and by turbine shares
-otherwise. TYNDP inflows are compared with self-generated national hydro
-profiles, and missing or unusable TYNDP combinations can be imputed from these
-profiles according to documented rules.
+National or market-zone inflow budgets are distributed across all usable
+open-loop units by turbine-capacity shares. This prevents sparse storage
+metadata from dropping turbine-only buses. TYNDP inflows are compared with
+self-generated national hydro profiles, and missing or unusable TYNDP
+combinations can be imputed from these profiles according to documented rules.
+
+Final capacity, constraint, and inflow outputs are aggregated to unique
+physical `country_model/bus/plant_type/technology` keys. `source_countries`
+preserves the original countries when an aggregate such as A2 combines DE and
+LU.
 
 ## Typical Outputs
 

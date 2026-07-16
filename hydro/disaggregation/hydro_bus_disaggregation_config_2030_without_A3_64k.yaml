@@ -1,0 +1,14 @@
+common:
+  target_year: 2030
+  resolve_phs: true
+  project_root: Y:\Group_SEM\MA_Eric\Dissertation\opf
+  hydro_dir: Y:\Group_SEM\MA_Eric\Dissertation\opf\hydro\tyndp2024
+  country_profiles_dir: Y:\Group_SEM\MA_Eric\Dissertation\opf\hydro\atlite_copy\country_profiles
+  network_dir: Y:\Group_SEM\MA_Eric\Dissertation\opf\grid\target_year_2030\electrical_spectral_line_equivalent_dc_effective_reactance_without_A3_64k
+  load_csv: Y:\Group_SEM\MA_Eric\Dissertation\opf\load\target_year_2030\electrical_spectral_line_equivalent_dc_effective_reactance_without_A3_64k\disaggregated_load_country_bus_load_pop40_gdp60.csv
+  country_clusters_csv: Y:\Group_SEM\MA_Eric\Dissertation\opf\grid\target_year_2030\electrical_spectral_line_equivalent_dc_effective_reactance_without_A3_64k\cesa_country_clusters.csv
+  country_reductions_csv: Y:\Group_SEM\MA_Eric\Dissertation\opf\country_reductions.csv
+  excluded_countries_csv: Y:\Group_SEM\MA_Eric\Dissertation\opf\grid\target_year_2030\electrical_spectral_line_equivalent_dc_effective_reactance_without_A3_64k\excluded_countries.csv
+  output_dir: Y:\Group_SEM\MA_Eric\Dissertation\opf\hydro\target_year_2030\electrical_spectral_line_equivalent_dc_effective_reactance_without_A3_64k
+  include_inflows: true
+  audit_only: false

@@ -42,12 +42,12 @@ PATH_ARG_NAMES = {
 BOOL_ARG_NAMES = {"include_inflows", "audit_only", "resolve_phs"}
 
 CAPACITY_FIELDS = [
-    "country", "country_model", "country_label", "bus", "ref_year", "plant_type", "technology",
+    "country", "country_model", "country_label", "source_countries", "bus", "ref_year", "plant_type", "technology",
     "current_turb_mw", "current_storage_mwh", "target_turb_mw", "target_storage_mwh",
     "turbine_share", "storage_share", "allocation_rule",
 ]
 CONSTRAINT_FIELDS = [
-    "country", "country_model", "country_label", "bus", "ref_year", "plant_type", "technology",
+    "country", "country_model", "country_label", "source_countries", "bus", "ref_year", "plant_type", "technology",
     "temporal_resolution", "week", "period_start_date", "period_end_date", "days_in_period",
     "installed_turb_mw", "installed_pump_mw", "installed_storage_mwh",
     "min_turb_mw", "max_turb_mw", "min_turb_pu", "max_turb_pu",
@@ -58,7 +58,7 @@ CONSTRAINT_FIELDS = [
     "turbine_share", "storage_share", "allocation_rule",
 ]
 INFLOW_FIELDS = [
-    "country", "country_model", "country_label", "bus", "ref_year", "weather_year", "week",
+    "country", "country_model", "country_label", "source_countries", "bus", "ref_year", "weather_year", "week",
     "plant_type", "technology", "national_inflow_source", "national_inflow_mwh_week",
     "bus_inflow_total_mwh_week", "allocated_inflow_mwh_week",
     "bus_total_storage_share", "bus_tech_turbine_share", "allocation_rule",
@@ -282,6 +282,10 @@ def fmt(value: float, digits: int = 6) -> str:
 
 def fmt_amount(value: float) -> str:
     return fmt(value, 0)
+
+
+def fmt_inflow(value: float) -> str:
+    return fmt(value, 6)
 
 
 def fmt_share(value: float) -> str:
@@ -1874,6 +1878,130 @@ def build_constraint_rows(expanded_constraints: list[dict[str, Any]], target: di
     return out
 
 
+def joined_sources(rows: list[dict[str, Any]]) -> str:
+    return "|".join(sorted({str(row.get("country") or "") for row in rows if str(row.get("country") or "")}))
+
+
+def joined_rules(rows: list[dict[str, Any]]) -> str:
+    rules = sorted({str(row.get("allocation_rule") or "") for row in rows if str(row.get("allocation_rule") or "")})
+    if len(rows) > 1:
+        rules.append("model_country_physical_key_aggregation")
+    return ";".join(dict.fromkeys(rules))
+
+
+def aggregate_capacity_rows_by_physical_key(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    groups: dict[tuple[str, str, str, str, str], list[dict[str, Any]]] = defaultdict(list)
+    for row in rows:
+        key = (
+            str(row["country_model"]),
+            str(row["bus"]),
+            str(row["ref_year"]),
+            str(row["plant_type"]),
+            str(row["technology"]),
+        )
+        groups[key].append(row)
+
+    out: list[dict[str, Any]] = []
+    for key, items in sorted(groups.items()):
+        country_model, bus, ref_year, plant_type, technology = key
+        labels = sorted({str(item.get("country_label") or country_model) for item in items})
+        out.append({
+            "country": country_model,
+            "country_model": country_model,
+            "country_label": "|".join(labels),
+            "source_countries": joined_sources(items),
+            "bus": bus,
+            "ref_year": ref_year,
+            "plant_type": plant_type,
+            "technology": technology,
+            "current_turb_mw": fmt_amount(sum(parse_float(item.get("current_turb_mw")) for item in items)),
+            "current_storage_mwh": fmt_amount(sum(parse_float(item.get("current_storage_mwh")) for item in items)),
+            "target_turb_mw": fmt_amount(sum(parse_float(item.get("target_turb_mw")) for item in items)),
+            "target_storage_mwh": fmt_amount(sum(parse_float(item.get("target_storage_mwh")) for item in items)),
+            "turbine_share": "",
+            "storage_share": "",
+            "allocation_rule": joined_rules(items),
+        })
+
+    totals: dict[tuple[str, str, str], dict[str, float]] = defaultdict(lambda: {"turb": 0.0, "storage": 0.0})
+    for row in out:
+        combo = (str(row["country_model"]), str(row["plant_type"]), str(row["technology"]))
+        totals[combo]["turb"] += parse_float(row["target_turb_mw"])
+        totals[combo]["storage"] += parse_float(row["target_storage_mwh"])
+    for row in out:
+        combo = (str(row["country_model"]), str(row["plant_type"]), str(row["technology"]))
+        row["turbine_share"] = fmt_share(
+            0.0 if totals[combo]["turb"] <= EPS else parse_float(row["target_turb_mw"]) / totals[combo]["turb"]
+        )
+        row["storage_share"] = fmt_share(
+            0.0 if totals[combo]["storage"] <= EPS else parse_float(row["target_storage_mwh"]) / totals[combo]["storage"]
+        )
+    return out
+
+
+def aggregate_constraint_rows_by_physical_key(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    key_fields = [
+        "country_model", "bus", "ref_year", "plant_type", "technology", "temporal_resolution",
+        "week", "period_start_date", "period_end_date", "days_in_period",
+    ]
+    additive_fields = [
+        "installed_turb_mw", "installed_pump_mw", "installed_storage_mwh",
+        "min_turb_mw", "max_turb_mw", "min_pump_mw", "max_pump_mw",
+        "min_turb_en_mwh_day", "max_turb_en_mwh_day", "min_pump_en_mwh_day", "max_pump_en_mwh_day",
+        "min_turb_en_mwh_period", "max_turb_en_mwh_period", "min_pump_en_mwh_period", "max_pump_en_mwh_period",
+    ]
+    groups: dict[tuple[str, ...], list[dict[str, Any]]] = defaultdict(list)
+    for row in rows:
+        groups[tuple(str(row[field]) for field in key_fields)].append(row)
+
+    out: list[dict[str, Any]] = []
+    for key, items in sorted(groups.items()):
+        new = dict(zip(key_fields, key))
+        country_model = str(new["country_model"])
+        labels = sorted({str(item.get("country_label") or country_model) for item in items})
+        new.update({
+            "country": country_model,
+            "country_label": "|".join(labels),
+            "source_countries": joined_sources(items),
+            "allocation_rule": joined_rules(items),
+        })
+        for field in additive_fields:
+            new[field] = fmt_amount(sum(parse_float(item.get(field)) for item in items))
+        installed_turb = parse_float(new["installed_turb_mw"])
+        installed_pump = parse_float(new["installed_pump_mw"])
+        installed_storage = parse_float(new["installed_storage_mwh"])
+        new["min_turb_pu"] = fmt(0.0 if installed_turb <= EPS else parse_float(new["min_turb_mw"]) / installed_turb, 16)
+        new["max_turb_pu"] = fmt(0.0 if installed_turb <= EPS else parse_float(new["max_turb_mw"]) / installed_turb, 16)
+        new["min_pump_pu"] = fmt(0.0 if installed_pump <= EPS else parse_float(new["min_pump_mw"]) / installed_pump, 16)
+        new["max_pump_pu"] = fmt(0.0 if installed_pump <= EPS else parse_float(new["max_pump_mw"]) / installed_pump, 16)
+        for field, fallback in (
+            ("min_res_hist_pu", 0.0),
+            ("max_res_hist_pu", 1.0),
+            ("min_res_tech_pu", 0.0),
+            ("max_res_tech_pu", 1.0),
+        ):
+            weighted = sum(parse_float(item.get(field)) * parse_float(item.get("installed_storage_mwh")) for item in items)
+            new[field] = fmt(fallback if installed_storage <= EPS else weighted / installed_storage, 16)
+        new["turbine_share"] = ""
+        new["storage_share"] = ""
+        out.append(new)
+
+    totals: dict[tuple[str, str, str, str], dict[str, float]] = defaultdict(lambda: {"turb": 0.0, "storage": 0.0})
+    for row in out:
+        combo = (str(row["country_model"]), str(row["plant_type"]), str(row["technology"]), str(row["week"]))
+        totals[combo]["turb"] += parse_float(row["installed_turb_mw"])
+        totals[combo]["storage"] += parse_float(row["installed_storage_mwh"])
+    for row in out:
+        combo = (str(row["country_model"]), str(row["plant_type"]), str(row["technology"]), str(row["week"]))
+        row["turbine_share"] = fmt_share(
+            0.0 if totals[combo]["turb"] <= EPS else parse_float(row["installed_turb_mw"]) / totals[combo]["turb"]
+        )
+        row["storage_share"] = fmt_share(
+            0.0 if totals[combo]["storage"] <= EPS else parse_float(row["installed_storage_mwh"]) / totals[combo]["storage"]
+        )
+    return out
+
+
 def build_inflow_rows(inflow_groups: list[dict[str, Any]], target: dict[tuple[str, str, str, str], dict[str, float]], bus_meta: dict[str, BusMeta], year: int) -> list[dict[str, Any]]:
     out: list[dict[str, Any]] = []
     for group in inflow_groups:
@@ -1884,24 +2012,18 @@ def build_inflow_rows(inflow_groups: list[dict[str, Any]], target: dict[tuple[st
         eligible_techs = set(group["eligible_techs"])
         if not eligible_techs:
             continue
-        bus_storage: dict[str, float] = defaultdict(float)
         bus_turb: dict[str, float] = defaultdict(float)
         for (c, plant_type, technology, bus), vals in target.items():
             if c == country and (plant_type, technology) in eligible_techs and technology != "closed_loop":
-                bus_storage[bus] += vals["storage"]
                 bus_turb[bus] += vals["turb"]
-        total_storage, total_turb = sum(bus_storage.values()), sum(bus_turb.values())
-        if total_storage <= EPS and total_turb <= EPS:
+        total_turb = sum(bus_turb.values())
+        if total_turb <= EPS:
             continue
-        # Reservoir inflow is storage-driven where possible. Run-of-river or
-        # incomplete storage data fall back to turbine shares, which better
-        # represent the local conversion capacity.
-        bus_shares = (
-            {bus: val / total_storage for bus, val in bus_storage.items() if val > EPS}
-            if total_storage > EPS
-            else {bus: val / total_turb for bus, val in bus_turb.items() if val > EPS}
-        )
-        bus_rule = "bus_total_storage_shares" if total_storage > EPS else "fallback_bus_total_turbine_shares"
+        # TYNDP inflows are national or market-zone budgets without site-level
+        # hydrology. Share each budget across every usable open-loop turbine so
+        # sparse storage metadata cannot silently remove turbine-only buses.
+        bus_shares = {bus: val / total_turb for bus, val in bus_turb.items() if val > EPS}
+        bus_rule = "country_open_loop_turbine_shares"
         for bus, bshare in sorted(bus_shares.items()):
             bus_total = national_total * bshare
             bus_tech = {
@@ -1919,6 +2041,7 @@ def build_inflow_rows(inflow_groups: list[dict[str, Any]], target: dict[tuple[st
                     "country": country,
                     "country_model": meta.country_model,
                     "country_label": meta.country_label,
+                    "source_countries": country,
                     "bus": bus,
                     "ref_year": str(year),
                     "weather_year": weather_year,
@@ -1926,14 +2049,92 @@ def build_inflow_rows(inflow_groups: list[dict[str, Any]], target: dict[tuple[st
                     "plant_type": plant_type,
                     "technology": technology,
                     "national_inflow_source": str(group["source"]),
-                    "national_inflow_mwh_week": fmt_amount(national_total),
-                    "bus_inflow_total_mwh_week": fmt_amount(bus_total),
-                    "allocated_inflow_mwh_week": fmt_amount(bus_total * tech_share),
+                    "national_inflow_mwh_week": fmt_inflow(national_total),
+                    "bus_inflow_total_mwh_week": fmt_inflow(bus_total),
+                    "allocated_inflow_mwh_week": fmt_inflow(bus_total * tech_share),
                     "bus_total_storage_share": fmt_share(bshare),
                     "bus_tech_turbine_share": fmt_share(tech_share),
                     "allocation_rule": f"{bus_rule};bus_tech_turbine_shares",
                 })
     return out
+
+
+def aggregate_inflow_rows_by_physical_key(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    key_fields = [
+        "country_model", "bus", "ref_year", "weather_year", "week", "plant_type", "technology",
+    ]
+    groups: dict[tuple[str, ...], list[dict[str, Any]]] = defaultdict(list)
+    for row in rows:
+        groups[tuple(str(row[field]) for field in key_fields)].append(row)
+
+    out: list[dict[str, Any]] = []
+    for key, items in sorted(groups.items()):
+        new = dict(zip(key_fields, key))
+        country_model = str(new["country_model"])
+        labels = sorted({str(item.get("country_label") or country_model) for item in items})
+        national = sum(parse_float(item.get("national_inflow_mwh_week")) for item in items)
+        bus_total = sum(parse_float(item.get("bus_inflow_total_mwh_week")) for item in items)
+        allocated = sum(parse_float(item.get("allocated_inflow_mwh_week")) for item in items)
+        sources = sorted({str(item.get("national_inflow_source") or "") for item in items if str(item.get("national_inflow_source") or "")})
+        new.update({
+            "country": country_model,
+            "country_label": "|".join(labels),
+            "source_countries": joined_sources(items),
+            "national_inflow_source": "|".join(sources),
+            "national_inflow_mwh_week": fmt_inflow(national),
+            "bus_inflow_total_mwh_week": fmt_inflow(bus_total),
+            "allocated_inflow_mwh_week": fmt_inflow(allocated),
+            "bus_total_storage_share": fmt_share(0.0 if abs(national) <= EPS else bus_total / national),
+            "bus_tech_turbine_share": fmt_share(0.0 if abs(bus_total) <= EPS else allocated / bus_total),
+            "allocation_rule": joined_rules(items),
+        })
+        out.append(new)
+    return out
+
+
+def validate_inflow_budget(
+    inflow_groups: list[dict[str, Any]],
+    inflow_rows: list[dict[str, Any]],
+) -> dict[str, Any]:
+    expected: dict[tuple[str, int, int, str], float] = defaultdict(float)
+    observed: dict[tuple[str, int, int, str], float] = defaultdict(float)
+    for group in inflow_groups:
+        key = (
+            str(group["country"]),
+            int(group["weather_year"]),
+            int(group["week"]),
+            str(group["source"]),
+        )
+        expected[key] += float(group["inflow_mwh_week"])
+    for row in inflow_rows:
+        key = (
+            str(row["country"]),
+            int(row["weather_year"]),
+            int(row["week"]),
+            str(row["national_inflow_source"]),
+        )
+        observed[key] += parse_float(row["allocated_inflow_mwh_week"])
+
+    errors = {
+        key: abs(expected.get(key, 0.0) - observed.get(key, 0.0))
+        for key in set(expected) | set(observed)
+    }
+    tolerance_mwh = 1e-4
+    mismatches = [key for key, error in errors.items() if error > tolerance_mwh]
+    result = {
+        "passed": not mismatches,
+        "groups": len(errors),
+        "tolerance_mwh": tolerance_mwh,
+        "max_abs_error_mwh": max(errors.values(), default=0.0),
+        "mismatched_groups": len(mismatches),
+    }
+    if mismatches:
+        worst = max(mismatches, key=errors.__getitem__)
+        raise ValueError(
+            "Hydro inflow allocation does not conserve its country-week budget: "
+            f"key={worst}, error_mwh={errors[worst]:.6f}"
+        )
+    return result
 
 
 def pearson_correlation(xs: list[float], ys: list[float]) -> float | None:
@@ -2392,8 +2593,22 @@ def main() -> None:
         bus_meta,
         cluster_map,
     )
+    inflow_target = {
+        (
+            str(row["country"]),
+            str(row["plant_type"]),
+            str(row["technology"]),
+            str(row["bus"]),
+        ): {
+            "turb": parse_float(row["target_turb_mw"]),
+            "storage": parse_float(row["target_storage_mwh"]),
+        }
+        for row in target_rows
+        if parse_float(row["target_turb_mw"]) > EPS
+    }
 
-    write_csv(outdir / "disaggregated_hydro_bus_capacities.csv", target_rows, CAPACITY_FIELDS)
+    physical_target_rows = aggregate_capacity_rows_by_physical_key(target_rows)
+    write_csv(outdir / "disaggregated_hydro_bus_capacities.csv", physical_target_rows, CAPACITY_FIELDS)
     share_rows = build_share_rows(
         target_rows,
         current,
@@ -2408,15 +2623,17 @@ def main() -> None:
     inflow_diag: list[dict[str, Any]] = []
     flags: list[dict[str, Any]] = list(country_filter_flags)
     inflow_rows: list[dict[str, Any]] = []
+    inflow_budget_validation: dict[str, Any] | None = None
     nc_profile_meta: dict[str, Any] = {}
     if not args.audit_only:
         constraint_rows = build_constraint_rows(expanded_constraints, target, bus_meta)
-        write_csv(outdir / "disaggregated_hydro_bus_constraints_weekly.csv", constraint_rows, CONSTRAINT_FIELDS)
+        physical_constraint_rows = aggregate_constraint_rows_by_physical_key(constraint_rows)
+        write_csv(outdir / "disaggregated_hydro_bus_constraints_weekly.csv", physical_constraint_rows, CONSTRAINT_FIELDS)
         if args.include_inflows:
             combo_profiles, inflow_diag, inflow_flags, combo_meta, redirected_profiles = load_inflows(inflows_csv, args.target_year, resolved_component_map)
             flags.extend(inflow_flags)
             nc_countries = {
-                country for (country, _plant_type, technology, _bus) in target if technology != "closed_loop"
+                country for (country, _plant_type, technology, _bus) in inflow_target if technology != "closed_loop"
             }
             nc_totals: dict[tuple[str, int, int], float] = {}
             nc_by_type: dict[tuple[str, str, int, int], float] = {}
@@ -2429,10 +2646,12 @@ def main() -> None:
                     "hydro_types": list(nc_meta.hydro_types),
                 }
                 write_tyndp_nc_comparison_report(outdir, combo_profiles, combo_meta, target, nc_totals, nc_by_type)
-            inflow_groups, nc_flags = build_inflow_groups(combo_profiles, combo_meta, redirected_profiles, target, nc_totals, nc_by_type, args.resolve_phs)
+            inflow_groups, nc_flags = build_inflow_groups(combo_profiles, combo_meta, redirected_profiles, inflow_target, nc_totals, nc_by_type, args.resolve_phs)
             flags.extend(nc_flags)
-            inflow_rows = build_inflow_rows(inflow_groups, target, bus_meta, args.target_year)
-            write_csv(outdir / "disaggregated_hydro_bus_inflows_weekly.csv", inflow_rows, INFLOW_FIELDS)
+            inflow_rows = build_inflow_rows(inflow_groups, inflow_target, bus_meta, args.target_year)
+            inflow_budget_validation = validate_inflow_budget(inflow_groups, inflow_rows)
+            physical_inflow_rows = aggregate_inflow_rows_by_physical_key(inflow_rows)
+            write_csv(outdir / "disaggregated_hydro_bus_inflows_weekly.csv", physical_inflow_rows, INFLOW_FIELDS)
 
     write_audit(outdir, capacity_diag, inflow_diag, flags, target_rows, current, inflow_rows)
     write_json(outdir / "hydro_disaggregation_manifest.json", {
@@ -2453,6 +2672,11 @@ def main() -> None:
         "resolve_phs": bool(args.resolve_phs),
         "include_inflows": bool(args.include_inflows),
         "audit_only": bool(args.audit_only),
+        "inflow_bus_allocation": "country_open_loop_turbine_shares",
+        "inflow_budget_validation": inflow_budget_validation,
+        "physical_key_aggregation": "country_model,bus,plant_type,technology",
+        "source_capacity_rows": len(target_rows),
+        "physical_capacity_rows": len(physical_target_rows),
         "skipped_excluded_hydro_countries": skipped_excluded_hydro_countries,
         "skipped_hydro_countries_without_buses": skipped_hydro_countries,
         "constraint_expansion_diagnostics": constraint_diag,

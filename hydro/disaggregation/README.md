@@ -260,6 +260,13 @@ Im Unterordner `audit`:
 - Fuer `2030` und `2040` muessen sowohl reduzierte Netzdatensaetze als auch Lastoutputs vorhanden sein.
 - Die aktuelle Busgewichtung fuer Hydrobestand basiert auf `plants.csv`.
 - Der NC-Vergleich und der NC-Fallback sind national bzw. technologiebezogen, nicht busbezogen.
+- Nationale bzw. marktgebietsbezogene Zuflussbudgets werden ueber positive
+  Turbinenkapazitaeten auf alle offenen Hydroeinheiten verteilt. Dadurch fallen
+  reine Turbinenbusse bei lueckenhaften Speicherdaten nicht aus der Zuflussdatei.
+- Die finalen Kapazitaets-, Restriktions- und Zuflussdateien besitzen eindeutige
+  physische `country_model/bus/plant_type/technology`-Schluessel. Bei
+  Laenderaggregaten dokumentiert `source_countries` die zusammengefuehrten
+  Ursprungslaender.
 - Die Audit-Tabellen `hydro_current_vs_target_country_total.csv` und `hydro_current_vs_target_country_type_shift_signature.csv` helfen dabei, reine Technologieverschiebungen zwischen `ROR`, `WR` und `PHS` von echtem Zubau oder Rueckbau zu trennen.
 - Die Kapazitaetsallokation nutzt diese Trennung jetzt direkt: moegliche Typverschiebungen werden vor echtem Neubau auf bestehende Hydrobusse gelegt; nur der verbleibende Restzubau geht auf den hydrostaerksten Bus des Landes.
 - Wenn `resolve_phs = false`, wird fuer reine `phs/open_loop`-Faelle bei fehlenden oder komplett `0`-TYNDP-Zufluessen ein technologiespezifischer NC-Fallback ueber `hydro_type = phs` genutzt. Falls kein `phs`-Profil vorliegt, wird auf das nationale NC-Gesamtprofil zurueckgegriffen.
