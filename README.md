@@ -244,7 +244,7 @@ used to create them.
 - Raw data licensing is external to this repository. Check the licenses of
   TYNDP, ERA5, GISCO, WDPA, Natura 2000, JRC, and other source data before
   redistribution.
-- The scripts assume a European power-system context and TYNDP 2024 naming
+- The scripts assume a TYNDP 2024 naming
   conventions. Other scenario sources will require mapping changes.
 - The pipeline is deterministic for a fixed set of inputs and YAML settings,
   except where a script explicitly exposes a random seed.
